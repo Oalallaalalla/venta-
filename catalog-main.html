@@ -1,0 +1,74 @@
+<!-- catalog:start -->
+<section class="catalog container" id="catalogo" data-vue-catalog>
+  <div class="section-heading">
+    <div><h2>Encuentra tu celular.</h2><p>Compara modelos, capacidades y precios en un solo lugar.</p></div>
+    <span class="catalog-count" id="results-count" role="status" aria-live="polite" v-text="resultLabel"></span>
+  </div>
+  <catalog-filters v-model:query="state.query" v-model:brand="state.brand" v-model:sort="state.sort"></catalog-filters>
+  <div id="catalog-context" class="catalog-context" :hidden="!contextLabel">
+    <span v-text="contextLabel"></span><button id="clear-filters" type="button" @click="reset">Limpiar filtros ×</button>
+  </div>
+  <div class="products" id="products">
+    <product-card v-for="product in filteredProducts" :key="product.id" :product="product"></product-card>
+    <div class="empty" v-if="!filteredProducts.length">
+      <img src="assets/magnifying-glass.svg" alt=""><h3>No encontramos ese modelo.</h3>
+      <p>Prueba con iPhone, Samsung o 256 GB.</p>
+      <button class="button primary" id="reset-search" type="button" @click="reset">Ver todos los equipos</button>
+    </div>
+  </div>
+  <noscript>Activa JavaScript para filtrar los equipos y usar el carrito.</noscript>
+  <p class="demo-note">Precios referenciales. Envía tu solicitud desde el carrito para confirmar disponibilidad y entrega.</p>
+</section>
+
+<template id="catalog-filters-template">
+  <div class="catalog-toolbar">
+    <div class="filters" role="group" aria-label="Filtrar por marca">
+      <button v-for="option in brands" :key="option" type="button" :class="{selected: brand === option}" :data-filter="option" :aria-pressed="brand === option" @click="$emit('update:brand', option)">{{ option }}</button>
+    </div>
+    <div class="catalog-tools">
+      <label class="search"><img src="assets/magnifying-glass.svg" alt=""><input id="search" type="search" :value="query" @input="$emit('update:query', $event.target.value)" maxlength="120" placeholder="Filtrar modelo o capacidad" aria-label="Buscar un modelo"></label>
+      <sort-control :model-value="sort" @update:model-value="$emit('update:sort', $event)"></sort-control>
+    </div>
+  </div>
+</template>
+
+<template id="sort-control-template">
+  <div class="sort-control" ref="root" :class="{'is-open': open, 'opens-up': opensUp}" @focusout="onFocusout">
+    <button id="sort" class="sort-trigger" ref="trigger" type="button" role="combobox" aria-haspopup="listbox" aria-controls="sort-options" :aria-expanded="open" :aria-activedescendant="open ? 'sort-option-' + options[active].value : undefined" :aria-label="'Ordenar productos: ' + selected.label" @click="toggle" @keydown="onKeydown">
+      <svg class="ui-icon sort-symbol" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16M4 12h11M4 18h6"></path></svg>
+      <span class="sort-trigger-copy"><span class="sort-eyebrow">Ordenar por</span><span class="sort-value">{{ selected.label }}</span></span>
+      <svg class="ui-icon sort-chevron" aria-hidden="true"><use href="assets/ui-icons.svg#chevron"></use></svg>
+    </button>
+    <transition name="sort-menu">
+      <div class="sort-popover" v-show="open" :style="{maxHeight: maxHeight + 'px'}">
+        <div class="sort-menu-heading" aria-hidden="true">Ordenar catálogo <span>3 opciones</span></div>
+        <ul id="sort-options" class="sort-options" ref="list" role="listbox" aria-label="Ordenar productos">
+          <li v-for="(option, index) in options" :key="option.value" :id="'sort-option-' + option.value" class="sort-option" :class="{'is-active': active === index, 'is-selected': modelValue === option.value}" role="option" :aria-selected="modelValue === option.value" :aria-label="option.label" @pointermove="active = index" @pointerdown.prevent @click="choose(index)">
+            <span class="sort-option-copy"><span class="sort-option-label">{{ option.label }}</span><span class="sort-option-description">{{ option.description }}</span></span>
+            <svg class="ui-icon sort-option-check" aria-hidden="true"><use href="assets/ui-icons.svg#check"></use></svg>
+          </li>
+        </ul>
+      </div>
+    </transition>
+  </div>
+</template>
+
+<template id="product-card-template">
+  <article class="product">
+    <a class="product-picture" :href="productURL(product.id)" :aria-label="'Ver características de ' + product.name"><img :src="'assets/' + product.image" :alt="product.name + ' en ' + product.color" loading="lazy"></a>
+    <div class="product-info">
+      <span class="product-brand">{{ product.brand }}</span>
+      <h3><a :href="productURL(product.id)">{{ product.name }}</a></h3>
+      <p class="product-spec">{{ product.capacity }} GB · {{ product.color }}</p>
+      <a class="product-details-link" :href="productURL(product.id)">Ver características <span aria-hidden="true">↗</span></a>
+      <div class="price-row">
+        <span class="price">{{ money(product.price) }}</span>
+        <button type="button" class="add-button" :class="{'is-added': added}" :data-add="product.id" :aria-label="'Agregar ' + product.name + ' al carrito'" @click.stop="addToCart">
+          <span class="button-label">{{ added ? 'Agregado' : 'Agregar' }}</span>
+          <svg class="ui-icon" :class="{'button-confirmation-icon': added}" aria-hidden="true"><use :href="'assets/ui-icons.svg#' + (added ? 'check' : 'plus')"></use></svg>
+        </button>
+      </div>
+    </div>
+  </article>
+</template>
+<!-- catalog:end -->
